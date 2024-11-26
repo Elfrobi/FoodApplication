@@ -1,12 +1,18 @@
 <resources>
     <string name="app_name">FoodApplication</string>
-    <string name="login">Login</string>
-    <string name="password">Password</string>
+
+    <!-- Regisztráció/Belépés -->
+    <string name="login">Belépés</string>
+    <string name="password">Jelszó</string>
     <string name="email">Email</string>
+
+
     <string name="elemiszer">Élelmiszer</string>
     <string name="editfood">Élelmiszer szerkesztése</string>
     <string name="close">Close</string>
     <string name="elelmiszer">Élelmiszer</string>
     <string name="add">Hozzáadás</string>
     <string name="delete">Törlés</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
 </resources>

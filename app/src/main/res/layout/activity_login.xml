@@ -40,6 +40,8 @@
                 android:hint="@string/email"
                 android:inputType="textEmailAddress"
                 android:padding="16dp"
+                android:textColor="@color/primaryColor"
+                android:textColorHint="@color/hintColor"
                 android:background="@drawable/edit_text_background" />
 
             <EditText
@@ -49,6 +51,8 @@
                 android:hint="@string/password"
                 android:inputType="textPassword"
                 android:padding="16dp"
+                android:textColor="@color/primaryColor"
+                android:textColorHint="@color/hintColor"
                 android:background="@drawable/edit_text_background"
                 android:layout_marginTop="8dp" />
 
@@ -67,8 +71,8 @@
                 android:id="@+id/RegisterLink"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Don't have an account? Register"
-                android:textColor="#3b5998"
+                android:text="Nincs még fiókod? Kattints ide"
+                android:textColor="#3B5998"
                 android:textSize="20sp"
                 android:gravity="center"
                 android:layout_marginTop="16dp"

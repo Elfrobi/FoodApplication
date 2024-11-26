@@ -29,19 +29,33 @@ class LoginActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
 
         LoginButton.setOnClickListener {
-            val email = LoginEmail.text.toString()
-            val password = LoginPassword.text.toString()
+            //val email = LoginEmail.text.toString()
+            //val password = LoginPassword.text.toString()
+            val email = "test@gmail.com"
+            val password = "asd123"
             if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Email and Password must not be empty", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Az Email cím és a jelszó nem lehet üres", Toast.LENGTH_SHORT).show()
             } else {
                 auth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(this) { task ->
                         if (task.isSuccessful) {
                             Log.i("LoginActivity", "Login successful")
-                            val intent = Intent(this, MainActivity::class.java)
-                            startActivity(intent)
+                            if (email == "admin@admin.com"){
+                                val intent = Intent(this, AdminActivity::class.java)
+                                startActivity(intent)
+                            } else {
+                                val intent = Intent(this, MainActivity::class.java)
+                                startActivity(intent)
+                            }
                         } else {
-                            Toast.makeText(this, "Login failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                            Log.e("a","${task.exception?.message}")
+                            when (task.exception?.message) {
+                                "The email address is badly formatted." -> Toast.makeText(this, "Az Email cím nem megfelelő", Toast.LENGTH_SHORT).show()
+                                "The supplied auth credential is incorrect, malformed or has expired." -> Toast.makeText(this, "Hibás email cím vagy jelszó", Toast.LENGTH_SHORT).show()
+                                else -> {
+                                    Toast.makeText(this, "Hiba a bejelentkezésben", Toast.LENGTH_SHORT).show()
+                                }
+                            }
                         }
                     }
             }
@@ -53,6 +67,20 @@ class LoginActivity : AppCompatActivity() {
         }
 
     }
+
+    override fun onStart() {
+        super.onStart()
+
+        // Ellenőrzés: ha a felhasználó már be van jelentkezve, lépj tovább
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            // Ugrás a MainActivity-re
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+    }
+
 
     fun goToRegister(view: View) {
         startActivity(Intent(this, RegisterActivity::class.java))

@@ -22,7 +22,12 @@
             android:id="@+id/RegisterName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Name"
+            android:hint="Név"
+            android:padding="16dp"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/primaryColor"
+            android:textColorHint="@color/hintColor"
+            android:background="@drawable/edit_text_background"
             android:inputType="textPersonName" />
 
         <EditText
@@ -30,34 +35,53 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Email"
+            android:padding="16dp"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/primaryColor"
+            android:textColorHint="@color/hintColor"
+            android:background="@drawable/edit_text_background"
             android:inputType="textEmailAddress" />
 
         <EditText
             android:id="@+id/RegisterPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Password"
+            android:hint="Jelszó"
+            android:padding="16dp"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/primaryColor"
+            android:textColorHint="@color/hintColor"
+            android:background="@drawable/edit_text_background"
             android:inputType="textPassword" />
 
         <EditText
             android:id="@+id/ConfirmPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Confirm Password"
+            android:hint="Jelszó megerősítése"
+            android:padding="16dp"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/primaryColor"
+            android:textColorHint="@color/hintColor"
+            android:background="@drawable/edit_text_background"
             android:inputType="textPassword" />
 
         <Button
             android:id="@+id/RegisterButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Register" />
+            android:layout_marginTop="8dp"
+            android:text="Regisztráció" />
 
         <TextView
             android:id="@+id/LoginLink"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Already have an account? Login"
+            android:text="Van már fiókod? Lépj be"
             android:gravity="center"
+            android:textColor="@color/primaryColor"
+            android:textSize="20sp"
+            android:layout_marginTop="16dp"
             android:onClick="goToLogin" />
     </LinearLayout>
 

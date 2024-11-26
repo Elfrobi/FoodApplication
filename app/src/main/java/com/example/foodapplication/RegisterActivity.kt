@@ -1,15 +1,16 @@
 package com.example.foodapplication
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.EditText
-import android.widget.Button
-import android.content.Intent
 import android.view.View
+import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class RegisterActivity : AppCompatActivity() {
     private lateinit var RegisterName: EditText
@@ -18,6 +19,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var ConfirmPassword: EditText
     private lateinit var RegisterButton: Button
     private lateinit var auth: FirebaseAuth
+    private lateinit var database: FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,27 +31,29 @@ class RegisterActivity : AppCompatActivity() {
         ConfirmPassword = findViewById(R.id.ConfirmPassword)
         RegisterButton = findViewById(R.id.RegisterButton)
 
+        auth = FirebaseAuth.getInstance()
+        database = FirebaseFirestore.getInstance()
+
         RegisterButton.setOnClickListener {
             val name = RegisterName.text.toString()
             val email = RegisterEmail.text.toString()
             val password = RegisterPassword.text.toString()
             val confirmPassword = ConfirmPassword.text.toString()
 
-            auth = FirebaseAuth.getInstance()
-
             if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-                Toast.makeText(this, "All fields must be filled", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Nincs kitöltve minden", Toast.LENGTH_SHORT).show()
             } else if (password != confirmPassword) {
                 Toast.makeText(this, "A jelszók nem egyeznek", Toast.LENGTH_SHORT).show()
             } else {
                 auth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(this) { task ->
                         if (task.isSuccessful) {
-                            Log.i("RegisterActivity", "Registration successful")
+                            Log.i("RegisterActivity", "Regisztráció sikeres")
+                            uploadUsersDataToDatabase(name);
                             val intent = Intent(this, LoginActivity::class.java)
                             startActivity(intent)
                         } else {
-                            Toast.makeText(this, "Registration failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "Hiba a regisztrációban", Toast.LENGTH_SHORT).show()
                         }
                     }
             }
@@ -57,12 +61,21 @@ class RegisterActivity : AppCompatActivity() {
 
         findViewById<TextView>(R.id.LoginLink).setOnClickListener {
             goToLogin(it)
-
         }
     }
 
-    fun goToLogin(view: View) {
+    private fun goToLogin(view: View) {
         startActivity(Intent(this, LoginActivity::class.java))
     }
+
+    private fun uploadUsersDataToDatabase(registerName: String){
+        val uid = FirebaseAuth.getInstance().uid ?: ""
+        val ref = database.collection("Users").document(uid)
+        ref.set(
+            User(uid, registerName, "")
+        )
+   }
 }
+
+class User(val uid: String, val username: String, val household: String)
 
