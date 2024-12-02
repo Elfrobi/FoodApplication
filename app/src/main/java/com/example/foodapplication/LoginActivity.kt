@@ -29,10 +29,8 @@ class LoginActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
 
         LoginButton.setOnClickListener {
-            //val email = LoginEmail.text.toString()
-            //val password = LoginPassword.text.toString()
-            val email = "test@gmail.com"
-            val password = "asd123"
+            val email = LoginEmail.text.toString()
+            val password = LoginPassword.text.toString()
             if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Az Email cím és a jelszó nem lehet üres", Toast.LENGTH_SHORT).show()
             } else {
@@ -74,9 +72,13 @@ class LoginActivity : AppCompatActivity() {
         // Ellenőrzés: ha a felhasználó már be van jelentkezve, lépj tovább
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser != null) {
-            // Ugrás a MainActivity-re
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+            if (currentUser.email == "admin@admin.com") {
+                val intent = Intent(this, AdminActivity::class.java)
+                startActivity(intent)
+            } else {
+                val intent = Intent(this, MainActivity::class.java)
+                startActivity(intent)
+            }
             finish()
         }
     }

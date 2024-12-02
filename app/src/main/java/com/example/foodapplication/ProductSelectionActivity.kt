@@ -17,6 +17,7 @@ class ProductSelectionActivity : AppCompatActivity() {
     private lateinit var productListView: ListView
     private lateinit var unitSpinner: Spinner
     private lateinit var quantityEditText: EditText
+    private lateinit var commentEditText: EditText
     private lateinit var saveButton: Button
     private lateinit var cancelButton: Button
     private lateinit var scanBarcodeButton: Button
@@ -51,6 +52,7 @@ class ProductSelectionActivity : AppCompatActivity() {
         productListView = findViewById(R.id.productListView)
         unitSpinner = findViewById(R.id.unitSpinner)
         quantityEditText = findViewById(R.id.quantityEditText)
+        commentEditText = findViewById(R.id.commentEditText)
         saveButton = findViewById(R.id.saveButton)
         cancelButton = findViewById(R.id.cancelButton)
         scanBarcodeButton = findViewById(R.id.scanBarcodeButton)
@@ -182,7 +184,6 @@ class ProductSelectionActivity : AppCompatActivity() {
             .get()
             .addOnSuccessListener { productDocument ->
                 if (productDocument.exists()) {
-                    // Handle the productDocument here (e.g., set spinners, etc.)
                     val defaultUnitRef = productDocument.get("default_unit") as? DocumentReference
                     if (defaultUnitRef != null) {
                         defaultUnitRef.get()
@@ -215,9 +216,10 @@ class ProductSelectionActivity : AppCompatActivity() {
         if (selectedProductId != null && quantity.isNotEmpty()) {
             val productData = hashMapOf(
                 "product_id" to selectedProductId,
+                "name" to searchEditText.text.toString(),
                 "quantity" to quantity.toInt(),
                 "unit_id" to selectedUnitId,
-                "added_at" to FieldValue.serverTimestamp()
+                "comment" to commentEditText.text.toString()
             )
 
             firestore.collection("Households")
@@ -229,6 +231,7 @@ class ProductSelectionActivity : AppCompatActivity() {
                     searchEditText.text.clear()
                     unitSpinner.setSelection(8)
                     quantityEditText.text.clear()
+                    commentEditText.text.clear()
                 }
                 .addOnFailureListener {
                     Toast.makeText(this, "Error adding product", Toast.LENGTH_SHORT).show()

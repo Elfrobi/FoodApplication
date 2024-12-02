@@ -8,7 +8,7 @@
         android:id="@+id/searchEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Search Product" />
+        android:hint="Termék keresése" />
 
     <ListView
         android:id="@+id/productListView"
@@ -25,24 +25,30 @@
         android:id="@+id/quantityEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Quantity"
+        android:hint="Mennyiség"
         android:inputType="number" />
+
+    <EditText
+        android:id="@+id/commentEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Megjegyzés" />
 
     <Button
         android:id="@+id/scanBarcodeButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Scan Barcode" />
+        android:text="Vonalkód beolvasása" />
 
     <Button
         android:id="@+id/saveButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Save" />
+        android:text="Termék mentése" />
 
     <Button
         android:id="@+id/cancelButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Cancel" />
+        android:text="Vissza" />
 </LinearLayout>

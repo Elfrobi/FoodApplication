@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -14,6 +13,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.Spinner
 import androidx.appcompat.widget.Toolbar
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.drawerlayout.widget.DrawerLayout
@@ -22,7 +22,7 @@ import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(){
 
     private lateinit var foodListView: ListView
     private lateinit var adapter: FoodItemAdapter
@@ -33,10 +33,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var toolbar: Toolbar
     private lateinit var headerLayout: LinearLayout
     private val db = FirebaseFirestore.getInstance()
+    private lateinit var unitsList: MutableList<String>
+    private val unitsMap = mutableMapOf<String, String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        //TODO: jelenlegi household beállítása
+        val householdId = "householdtest"
+
+        unitsList = mutableListOf()
+        loadUnits()
 
         drawerLayout = findViewById(R.id.drawer_layout)
         navigationView = findViewById(R.id.nav_view)
@@ -47,11 +55,10 @@ class MainActivity : AppCompatActivity() {
 
         setHeaderPadding()
 
-        adapter = FoodItemAdapter(this, foodList)
+        adapter = FoodItemAdapter(this, foodList, unitsMap)
         foodListView.adapter = adapter
+        loadFoodList(householdId)
 
-        // Load initial data from Firestore
-        //loadFoodList()
 
         findViewById<Button>(R.id.addButton).setOnClickListener {
             val intent = Intent(this, ProductSelectionActivity::class.java)
@@ -102,6 +109,12 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        val householdId = "householdtest"
+        loadFoodList(householdId)
+    }
+
     private fun handleNavigationViewClick(){
         navigationView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
@@ -150,63 +163,55 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "Kijelentkezés sikeres", Toast.LENGTH_SHORT).show()
     }
 
-    private fun loadFoodList() {
-//        db.collection("foodItems")
-//            .get()
-//            .addOnSuccessListener { result ->
-//                foodList.clear()
-//                for (document in result) {
-//                    val foodName = document.getString("name")
-//                    foodName?.let { foodList.add(it) }
-//                }
-//                adapter.notifyDataSetChanged()
-//            }
-//            .addOnFailureListener { e ->
-//                Toast.makeText(this, "Error loading data", Toast.LENGTH_SHORT).show()
-//            }
+    private fun loadFoodList(householdId: String) {
+        // Hivatkozás a Shopping_List kollekcióra
+        db.collection("Households")
+            .document(householdId)
+            .collection("Shopping_List")
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                foodList.clear() // Korábbi lista törlése
 
-        // Notify adapter of data change
-        adapter.notifyDataSetChanged()
+                // Dokumentumok átalakítása FoodItem objektumokká
+                for (document in querySnapshot) {
+                    val id = document.id
+                    val name = document.getString("name") ?: "Unknown"
+                    val quantity = (document.getLong("quantity") ?: 0L).toInt()
+                    val unitId = document.getString("unit_id") ?: "Unknown"
+                    val comment = document.getString("comment") ?: "Unknown"
+
+                    foodList.add(FoodItem(id, name, quantity, unitId, comment))
+                }
+                adapter.notifyDataSetChanged() // Adapter frissítése
+            }
+            .addOnFailureListener { exception ->
+                Toast.makeText(this, "Hiba történt: ${exception.message}", Toast.LENGTH_SHORT).show()
+            }
     }
+
 
     private fun loadStorageList() {
         // Implement storage list loading from Firestore if needed
     }
 
-    private fun showAddFoodItemDialog() {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_food, null)
-        val foodNameEditText = dialogView.findViewById<EditText>(R.id.foodNameEditText)
-        val closeDialog = dialogView.findViewById<ImageView>(R.id.closeDialog)
 
-        val dialog = AlertDialog.Builder(this)
-            .setView(dialogView)
-            .create()
-
-        closeDialog.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        dialogView.findViewById<Button>(R.id.saveButton).setOnClickListener {
-            val foodName = foodNameEditText.text.toString()
-            if (foodName.isNotEmpty()) {
-                val newFood = hashMapOf("name" to foodName)
-//                db.collection("foodItems")
-//                    .add(newFood)
-//                    .addOnSuccessListener {
-//                        foodList.add(foodName)
-//                        adapter.notifyDataSetChanged()
-//                        dialog.dismiss()
-//                    }
-//                    .addOnFailureListener {
-//                        Toast.makeText(this, "Error adding item", Toast.LENGTH_SHORT).show()
-//                    }
-            } else {
-                Toast.makeText(this, "Please enter a food name", Toast.LENGTH_SHORT).show()
+    private fun loadUnits() {
+        db.collection("Units")
+            .get()
+            .addOnSuccessListener { result ->
+                unitsMap.clear()
+                for (document in result) {
+                    val unitId = document.id
+                    val unitName = document.getString("name") ?: ""
+                    unitsMap[unitId] = unitName
+                }
+                adapter.notifyDataSetChanged()
             }
-        }
-
-        dialog.show()
+            .addOnFailureListener {
+                Toast.makeText(this, "Error loading units", Toast.LENGTH_SHORT).show()
+            }
     }
+
 
     private fun setHeaderPadding(){
         val headerView = navigationView.getHeaderView(0)
@@ -227,13 +232,32 @@ class MainActivity : AppCompatActivity() {
     private fun showEditFoodItemDialog(position: Int) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_food, null)
         val foodNameEditText = dialogView.findViewById<EditText>(R.id.foodNameEditText)
+        val foodCommentEditText = dialogView.findViewById<EditText>(R.id.foodCommentEditText)
+        val foodQuantityEditText = dialogView.findViewById<EditText>(R.id.foodQuantityEditText)
+        val foodUnitSpinner = dialogView.findViewById<Spinner>(R.id.foodUnitSpinner)
         val closeDialog = dialogView.findViewById<ImageView>(R.id.closeDialog)
-
-        //foodNameEditText.setText(foodList[position])
 
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
             .create()
+
+        val foodItem = foodList[position]  // A foodList az adott háztartás Shopping_List-jét tartalmazza
+
+        // Kitöltjük az adatokat a foodItem objektumból
+        foodNameEditText.setText(foodItem.name)
+        foodCommentEditText.setText(foodItem.comment)
+        foodQuantityEditText.setText(foodItem.quantity.toString())
+
+        // Feltételezve, hogy az egységek listája elérhető
+        val unitAdapter = ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, unitsList)
+        unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        foodUnitSpinner.adapter = unitAdapter
+
+        // Az egység kiválasztása a foodItem alapján
+        val unitPosition = unitsList.indexOf(foodItem.unitId) // Az egység alapján beállítjuk a spinner pozícióját
+        if (unitPosition != -1) {
+            foodUnitSpinner.setSelection(unitPosition)
+        }
 
         closeDialog.setOnClickListener {
             dialog.dismiss()
@@ -241,17 +265,76 @@ class MainActivity : AppCompatActivity() {
 
         dialogView.findViewById<Button>(R.id.saveButton).setOnClickListener {
             val foodName = foodNameEditText.text.toString()
-            if (foodName.isNotEmpty()) {
-                //foodList[position] = foodName
-                    adapter.notifyDataSetChanged()
+            val foodComment = foodCommentEditText.text.toString()
+            val foodQuantity = foodQuantityEditText.text.toString()
+            val foodUnit = foodUnitSpinner.selectedItem.toString()
+
+            if (foodName.isNotEmpty() && foodQuantity.isNotEmpty()) {
+                // Csak akkor frissítjük az adatokat, ha történt változás
+                val updatedFoodItem = mutableMapOf<String, Any>()
+
+                if (foodName != foodItem.name) updatedFoodItem["name"] = foodName
+                if (foodComment != foodItem.comment) updatedFoodItem["comment"] = foodComment
+                if (foodQuantity.toInt() != foodItem.quantity) updatedFoodItem["quantity"] = foodQuantity.toInt()
+                if (foodUnit != foodItem.unitId) updatedFoodItem["unit_id"] = foodUnit
+
+                // Ha történt változás, frissítjük az adatbázisban
+                if (updatedFoodItem.isNotEmpty()) {
+                    updateFoodItemInHousehold("householdtest", foodItem.id, updatedFoodItem)
+                    foodItem.name = foodName
+                    foodItem.comment = foodComment
+                    foodItem.quantity = foodQuantity.toInt()
+                    foodItem.unitId = foodUnit
+                    adapter.notifyDataSetChanged()  // Adapter frissítése
+                    Toast.makeText(this, "Food item updated", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "No changes detected", Toast.LENGTH_SHORT).show()
+                }
                 dialog.dismiss()
             } else {
-                Toast.makeText(this, "Please enter a food name", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        dialogView.findViewById<Button>(R.id.deleteButton).setOnClickListener {
+            // Töröljük a terméket az adott háztartás Shopping_List kollekciójából
+            deleteFoodItemFromHousehold("householdtest", foodItem.id)
+            foodList.removeAt(position)
+            adapter.notifyDataSetChanged()  // Adapter frissítése
+            Toast.makeText(this, "Food item deleted", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
         }
 
         dialog.show()
     }
+
+
+
+    private fun updateFoodItemInHousehold(householdId: String, foodItemId: String, updatedData: Map<String, Any>) {
+        val foodRef = db.collection("Households").document(householdId)
+            .collection("Shopping_List").document(foodItemId)
+        foodRef.update(updatedData)
+            .addOnSuccessListener {
+                Toast.makeText(this, "Food item updated", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to update food item", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun deleteFoodItemFromHousehold(householdId: String, foodItemId: String) {
+        val foodRef = db.collection("Households").document(householdId)
+            .collection("Shopping_List").document(foodItemId)
+        foodRef.delete()
+            .addOnSuccessListener {
+                Toast.makeText(this, "Food item deleted", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to delete food item", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
 
     private fun showDeleteConfirmationDialog(position: Int) {
         AlertDialog.Builder(this)

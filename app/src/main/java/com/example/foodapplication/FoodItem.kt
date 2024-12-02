@@ -1,7 +1,9 @@
 package com.example.foodapplication
 
 data class FoodItem(
-    val name: String,
-    val quantity: String,
-    val iconResId: Int
+    var id: String,
+    var name: String,
+    var quantity: Int,
+    var unitId: String,
+    var comment: String
 )

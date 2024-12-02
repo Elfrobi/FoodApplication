@@ -5,25 +5,32 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.appcompat.widget.Toolbar
+import androidx.drawerlayout.widget.DrawerLayout
 import com.google.firebase.auth.EmailAuthProvider
 
 class SettingsActivity : AppCompatActivity() {
 
     private val db = FirebaseFirestore.getInstance()
     private val firebaseAuth = FirebaseAuth.getInstance()
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var toolbar: Toolbar
     private lateinit var nameTextView: TextView
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        drawerLayout = findViewById(R.id.drawer_layout)
+        toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
+
         supportActionBar?.title = "Beállítások"
 
         nameTextView = findViewById(R.id.nameTextView)
@@ -42,6 +49,16 @@ class SettingsActivity : AppCompatActivity() {
         changePasswordButton.setOnClickListener {
             showChangePasswordDialog()
         }
+
+        val actionBarDrawerToggle = ActionBarDrawerToggle(
+            this,
+            drawerLayout,
+            toolbar,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
+        )
+        drawerLayout.addDrawerListener(actionBarDrawerToggle)
+        actionBarDrawerToggle.syncState()
     }
 
     private fun showChangeNameDialog() {

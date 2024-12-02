@@ -1,5 +1,6 @@
 package com.example.foodapplication
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -9,6 +10,7 @@ import android.widget.EditText
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 import com.journeyapps.barcodescanner.ScanOptions
 import com.journeyapps.barcodescanner.ScanContract
 import com.google.firebase.firestore.FirebaseFirestore
@@ -94,6 +96,14 @@ class AdminActivity : AppCompatActivity() {
                     categoryIds.add(categoryId)
                 }
 
+                val sortedCategories = categoryNames.zip(categoryIds).sortedBy { it.first }
+                categoryNames.clear()
+                categoryIds.clear()
+                for (item in sortedCategories) {
+                    categoryNames.add(item.first)
+                    categoryIds.add(item.second)
+                }
+
                 val categoryAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categoryNames)
                 categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                 categorySpinner.adapter = categoryAdapter
@@ -128,6 +138,14 @@ class AdminActivity : AppCompatActivity() {
                     val unitId = document.id  // A dokumentum ID-t használjuk itt
                     unitNames.add(unitName)
                     unitIds.add(unitId)
+                }
+
+                val sortedUnits = unitNames.zip(unitIds).sortedBy { it.first }
+                unitNames.clear()
+                unitIds.clear()
+                for (item in sortedUnits) {
+                    unitNames.add(item.first)
+                    unitIds.add(item.second)
                 }
 
                 val unitAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, unitNames)
@@ -237,9 +255,30 @@ class AdminActivity : AppCompatActivity() {
         } else {
             Toast.makeText(this, "Add meg a termék nevét", Toast.LENGTH_SHORT).show()
         }
-
-
-
     }
 
+    override fun onBackPressed() {
+        super.onBackPressed()
+        FirebaseAuth.getInstance().signOut()
+
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+
+        Toast.makeText(this, "Kijelentkezés sikeres", Toast.LENGTH_SHORT).show()
+
+        //TODO: Ha lesz kilépés menu akkor, lépjen vissza (minimalizálja az alkalmazást)
+        //moveTaskToBack(true) // Az alkalmazást háttérbe helyezi
+    }
+
+
+//    private fun logoutUser() {
+//        FirebaseAuth.getInstance().signOut()
+//
+//        val intent = Intent(this, LoginActivity::class.java)
+//        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+//        startActivity(intent)
+//
+//        Toast.makeText(this, "Kijelentkezés sikeres", Toast.LENGTH_SHORT).show()
+//    }
 }
