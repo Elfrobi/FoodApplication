@@ -7,12 +7,20 @@
     <string name="email">Email</string>
 
 
-    <string name="elemiszer">Élelmiszer</string>
+    <string name="food">Élelmiszer</string>
     <string name="editfood">Élelmiszer szerkesztése</string>
     <string name="close">Close</string>
-    <string name="elelmiszer">Élelmiszer</string>
     <string name="add">Hozzáadás</string>
     <string name="delete">Törlés</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="newHousehold">Új háztartás létrehozása</string>
+    <string name="joinHousehold">Csatlakozás egy háztartáshoz</string>
+    <string name="settings">Beállítások</string>
+    <string name="logout">Kijelentkezés</string>
+
+    <string name="quantity">Mennyiség</string>
+    <string name="comment">Megjegyzés</string>
+
 </resources>

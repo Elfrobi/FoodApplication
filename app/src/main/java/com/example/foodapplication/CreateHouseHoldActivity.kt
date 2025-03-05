@@ -44,18 +44,16 @@ class CreateHouseholdActivity : AppCompatActivity() {
 
         val newHouseholdRef = firestore.collection("Households").document()
         val householdId = newHouseholdRef.id
-        val timestamp = FieldValue.serverTimestamp()
 
         val householdData = mapOf(
             "household_id" to householdId,
-            "household_name" to householdName,
-            "created_by" to userId,
-            "created_at" to timestamp,
-            "updated_at" to timestamp
+            "name" to householdName,
+            "created_by" to userId
         )
 
         newHouseholdRef.set(householdData)
             .addOnSuccessListener {
+                createHouseholdSubCollections(householdId)
                 addUserToHousehold(userId, householdId)
             }
             .addOnFailureListener { e ->
@@ -78,6 +76,17 @@ class CreateHouseholdActivity : AppCompatActivity() {
                 Toast.makeText(this, "Nem sikerült a felhasználót hozzáadni a háztartáshoz: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
+
+    private fun createHouseholdSubCollections(householdId: String) {
+        val householdRef = firestore.collection("Households").document(householdId)
+
+        val emptyData = mapOf("placeholder" to true)
+
+        householdRef.collection("Custom_Products").add(emptyData)
+        householdRef.collection("Shopping_List").add(emptyData)
+        householdRef.collection("Storage").add(emptyData)
+    }
+
 
     private fun updateUserHouseholds(userId: String, householdId: String) {
         val userRef = firestore.collection("Users").document(userId)

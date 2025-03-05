@@ -31,21 +31,21 @@
         android:id="@+id/foodNameEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/elelmiszer"
+        android:hint="@string/food"
         android:layout_marginTop="16dp" />
 
     <EditText
         android:id="@+id/foodCommentEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Megjegyzés"
+        android:hint="@string/comment"
         android:layout_marginTop="16dp" />
 
     <EditText
         android:id="@+id/foodQuantityEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Mennyiség"
+        android:hint="@string/quantity"
         android:layout_marginTop="16dp" />
 
     <Spinner

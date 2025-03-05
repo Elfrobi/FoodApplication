@@ -3,8 +3,8 @@ package com.example.foodapplication
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -40,6 +40,11 @@ class MainActivity : AppCompatActivity(){
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        loadSelectedHousehold()
+        if (currentHouseholdId != null) {
+            loadFoodList(currentHouseholdId!!)
+        }
+
         setContentView(R.layout.activity_main)
 
         checkUserHouseholds()
@@ -88,17 +93,16 @@ class MainActivity : AppCompatActivity(){
 
 
         handleNavigationViewClick()
-
-
+        loadUserHouseholdsToMenu()
 
         bottomNavigationView.setOnNavigationItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_food_list -> {
-                    //loadFoodList()
+                    loadFoodList(currentHouseholdId!!)
                     true
                 }
                 R.id.nav_storage_list -> {
-                    //loadStorageList()
+                    loadStorageList()
                     true
                 }
                 else -> false
@@ -110,8 +114,8 @@ class MainActivity : AppCompatActivity(){
 
     override fun onResume() {
         super.onResume()
-        val householdId = "householdtest"
-        loadFoodList(householdId)
+        loadUserHouseholdsToMenu()
+        loadFoodList(currentHouseholdId!!)
     }
 
     private fun checkUserHouseholds() {
@@ -143,8 +147,16 @@ class MainActivity : AppCompatActivity(){
     private fun handleNavigationViewClick(){
         navigationView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_home -> {
-                    Log.i("MainActivity", "HOME")
+                R.id.nav_new -> {
+                    Toast.makeText(this, "Új háztartás hozzáadása", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, CreateHouseholdActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
+                R.id.nav_join -> {
+                    Toast.makeText(this, "Csatlakozás egy háztartáshoz", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, JoinHouseholdActivity::class.java)
+                    startActivity(intent)
                     true
                 }
                 R.id.nav_settings -> {
@@ -159,25 +171,9 @@ class MainActivity : AppCompatActivity(){
                     drawerLayout.closeDrawer(navigationView)
                     true
                 }
-                R.id.nav_new -> {
-                    Toast.makeText(this, "Új háztartás hozzáadása", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(this, CreateHouseholdActivity::class.java)
-                    startActivity(intent)
-                    true
-                }
-                R.id.nav_join -> {
-                    Toast.makeText(this, "Csatlakozás egy háztartáshoz", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(this, JoinHouseholdActivity::class.java)
-                    startActivity(intent)
-                    true
-                }
-                R.id.nav_houseHold -> {
-                    Toast.makeText(this, "Háztartás", Toast.LENGTH_SHORT).show()
-                    true
-                }
                 else -> false
             }.also {
-                drawerLayout.closeDrawer(navigationView) // Bezárja a navigációs fiókot
+                drawerLayout.closeDrawer(navigationView)
             }
         }
     }
@@ -220,7 +216,7 @@ class MainActivity : AppCompatActivity(){
 
 
     private fun loadStorageList() {
-        // Implement storage list loading from Firestore if needed
+        //TODO: Storage List betöltése
     }
 
 
@@ -376,5 +372,55 @@ class MainActivity : AppCompatActivity(){
             }
             .setNegativeButton("No", null)
             .show()
+    }
+
+    private fun loadUserHouseholdsToMenu() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        db.collection("User_Households")
+            .whereEqualTo("user_id", userId)
+            .get()
+            .addOnSuccessListener { documents ->
+                val menu = navigationView.menu
+                menu.removeGroup(11)
+
+                val submenu = menu.addSubMenu(11, Menu.NONE, Menu.NONE, "Háztartások")
+
+                for (document in documents) {
+                    val householdId = document.getString("household_id") ?: continue
+
+                    db.collection("Households").document(householdId).get()
+                        .addOnSuccessListener { household ->
+                            val householdName = household.getString("name") ?: "Névtelen háztartás"
+                            val menuItem = submenu.add(Menu.NONE, householdId.hashCode(), Menu.NONE, householdName)
+
+                            menuItem.isCheckable = true
+
+                            if (householdId == currentHouseholdId) {
+                                menuItem.isChecked = true
+                            }
+
+                            menuItem.setOnMenuItemClickListener {
+                                saveSelectedHousehold(householdId)
+                                currentHouseholdId = householdId
+                                loadFoodList(householdId)
+                                drawerLayout.closeDrawer(navigationView)
+                                true
+                            }
+                        }
+                }
+            }
+    }
+
+
+    //kilépéskor maradjon megnyitva az utoljára kiválaszott háztartás
+    private fun saveSelectedHousehold(householdId: String) {
+        val sharedPref = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        sharedPref.edit().putString("SELECTED_HOUSEHOLD", householdId).apply()
+    }
+
+    private fun loadSelectedHousehold() {
+        val sharedPref = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        currentHouseholdId = sharedPref.getString("SELECTED_HOUSEHOLD", null)
     }
 }
