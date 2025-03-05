@@ -30,6 +30,9 @@
             tools:replace="screenOrientation" />
         <activity android:name=".ProductSelectionActivity" />
         <activity android:name=".SettingsActivity" />
+        <activity android:name=".NoHouseholdActivity" />
+        <activity android:name=".CreateHouseholdActivity" />
+        <activity android:name=".JoinHouseholdActivity" />
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />

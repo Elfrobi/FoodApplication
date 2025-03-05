@@ -35,13 +35,14 @@ class MainActivity : AppCompatActivity(){
     private val db = FirebaseFirestore.getInstance()
     private lateinit var unitsList: MutableList<String>
     private val unitsMap = mutableMapOf<String, String>()
+    private var currentHouseholdId: String? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        //TODO: jelenlegi household beállítása
-        val householdId = "householdtest"
+        checkUserHouseholds()
 
         unitsList = mutableListOf()
         loadUnits()
@@ -57,13 +58,11 @@ class MainActivity : AppCompatActivity(){
 
         adapter = FoodItemAdapter(this, foodList, unitsMap)
         foodListView.adapter = adapter
-        loadFoodList(householdId)
 
 
         findViewById<Button>(R.id.addButton).setOnClickListener {
             val intent = Intent(this, ProductSelectionActivity::class.java)
-            //TODO: lekérni a jelenlegi household ID-t
-            intent.putExtra("HOUSEHOLD_ID", "householdtest")
+            intent.putExtra("HOUSEHOLD_ID", currentHouseholdId)
             startActivity(intent)
         }
 
@@ -115,6 +114,32 @@ class MainActivity : AppCompatActivity(){
         loadFoodList(householdId)
     }
 
+    private fun checkUserHouseholds() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        FirebaseFirestore.getInstance()
+            .collection("User_Households")
+            .whereEqualTo("user_id", userId)
+            .get()
+            .addOnSuccessListener { userHousehold ->
+                if (userHousehold.isEmpty) {
+                    val intent = Intent(this, NoHouseholdActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                } else {
+                    val householdId = userHousehold.documents[0].getString("household_id")
+                    if (householdId != null) {
+                        currentHouseholdId = householdId
+                        loadFoodList(householdId)
+                    }
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Hiba történt a háztartások lekérésekor", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
     private fun handleNavigationViewClick(){
         navigationView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
@@ -136,10 +161,14 @@ class MainActivity : AppCompatActivity(){
                 }
                 R.id.nav_new -> {
                     Toast.makeText(this, "Új háztartás hozzáadása", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, CreateHouseholdActivity::class.java)
+                    startActivity(intent)
                     true
                 }
                 R.id.nav_join -> {
                     Toast.makeText(this, "Csatlakozás egy háztartáshoz", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, JoinHouseholdActivity::class.java)
+                    startActivity(intent)
                     true
                 }
                 R.id.nav_houseHold -> {
@@ -280,7 +309,7 @@ class MainActivity : AppCompatActivity(){
 
                 // Ha történt változás, frissítjük az adatbázisban
                 if (updatedFoodItem.isNotEmpty()) {
-                    updateFoodItemInHousehold("householdtest", foodItem.id, updatedFoodItem)
+                    currentHouseholdId?.let { householdId -> updateFoodItemInHousehold(householdId, foodItem.id, updatedFoodItem) }
                     foodItem.name = foodName
                     foodItem.comment = foodComment
                     foodItem.quantity = foodQuantity.toInt()
@@ -298,7 +327,7 @@ class MainActivity : AppCompatActivity(){
 
         dialogView.findViewById<Button>(R.id.deleteButton).setOnClickListener {
             // Töröljük a terméket az adott háztartás Shopping_List kollekciójából
-            deleteFoodItemFromHousehold("householdtest", foodItem.id)
+            currentHouseholdId?.let { householdId -> deleteFoodItemFromHousehold(householdId, foodItem.id) }
             foodList.removeAt(position)
             adapter.notifyDataSetChanged()  // Adapter frissítése
             Toast.makeText(this, "Food item deleted", Toast.LENGTH_SHORT).show()
