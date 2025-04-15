@@ -23,8 +23,8 @@ class FoodItemAdapter(
 
         val foodItem = foodItems[position]
         productNameTextView.text = foodItem.name
-        //unitsMap[foodItem.unitId] ?: "Unknown"
-        quantityTextView.text = "Mennyiség: ${foodItem.quantity} ${unitsMap[foodItem.unitId]}"
+        val unitName = unitsMap[foodItem.unitId] ?: "Unknown"
+        quantityTextView.text = "Mennyiség: ${foodItem.quantity} $unitName"
         commentTextView.text = "Megjegyzés: ${foodItem.comment}"
 
         return view

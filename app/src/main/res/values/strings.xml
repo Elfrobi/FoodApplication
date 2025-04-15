@@ -6,6 +6,13 @@
     <string name="password">Jelszó</string>
     <string name="email">Email</string>
 
+    <string name="household">Háztartás</string>
+    <string name="empty_list">Nincs még elem a listában</string>
+    <string name="new_food">Új termék hozzáadása</string>
+    <string name="empty_shopping_list">Üres a bevásárlólistád :(</string>
+    <string name="empty_storage_list">Még nem vettél fel terméket a háztartásba :(</string>
+
+
 
     <string name="food">Élelmiszer</string>
     <string name="editfood">Élelmiszer szerkesztése</string>
