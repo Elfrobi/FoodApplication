@@ -86,9 +86,9 @@ class MainActivity : AppCompatActivity(){
 
         foodListView.setOnItemLongClickListener { _, _, position, _ ->
             if (foodListView.adapter == storageListAdapter) {
-                showEditStorageItemDialog(position)
+                showEditItemDialog(position, storageList, storageListAdapter, "Storage")
             } else {
-                showEditFoodItemDialog(position)
+                showEditItemDialog(position, shoppingList, shoppingListAdapter, "Shopping_List")
             }
             true
         }
@@ -297,7 +297,12 @@ class MainActivity : AppCompatActivity(){
         )
     }
 
-    private fun showEditFoodItemDialog(position: Int) {
+    private fun showEditItemDialog(
+        position: Int,
+        itemList: MutableList<FoodItem>,
+        adapter: FoodItemAdapter,
+        collectionName: String
+    ) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_food, null)
         val foodNameEditText = dialogView.findViewById<EditText>(R.id.foodNameEditText)
         val foodCommentEditText = dialogView.findViewById<EditText>(R.id.foodCommentEditText)
@@ -309,9 +314,9 @@ class MainActivity : AppCompatActivity(){
             .setView(dialogView)
             .create()
 
-        val foodItem = shoppingList[position]  // A foodList az adott háztartás Shopping_List-jét tartalmazza
+        val foodItem = itemList[position]
 
-        // Kitöltjük az adatokat a foodItem objektumból
+        // Kitöltjük az adatokat
         foodNameEditText.setText(foodItem.name)
         foodCommentEditText.setText(foodItem.comment)
         foodQuantityEditText.setText(foodItem.quantity.toString())
@@ -321,91 +326,10 @@ class MainActivity : AppCompatActivity(){
         unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         foodUnitSpinner.adapter = unitAdapter
 
-        val unitName = unitsMap[foodItem.unitId]  // Leképezzük a unitId-t a megfelelő unit name-re
-        if (unitName != null) {
-            val unitPosition = unitsList.indexOf(unitName)  // Kiválasztjuk a pozíciót a unitsList-ben
-            if (unitPosition != -1) {
-                foodUnitSpinner.setSelection(unitPosition)  // Beállítjuk a spinner kiválasztott értékét
-            }
-        }
-
-        closeDialog.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        dialogView.findViewById<Button>(R.id.saveButton).setOnClickListener {
-            val foodName = foodNameEditText.text.toString()
-            val foodComment = foodCommentEditText.text.toString()
-            val foodQuantity = foodQuantityEditText.text.toString()
-            val foodUnit = foodUnitSpinner.selectedItem.toString()
-
-            if (foodName.isNotEmpty() && foodQuantity.isNotEmpty()) {
-                // Csak akkor frissítjük az adatokat, ha történt változás
-                val updatedFoodItem = mutableMapOf<String, Any>()
-
-                if (foodName != foodItem.name) updatedFoodItem["name"] = foodName
-                if (foodComment != foodItem.comment) updatedFoodItem["comment"] = foodComment
-                if (foodQuantity.toInt() != foodItem.quantity) updatedFoodItem["quantity"] = foodQuantity.toInt()
-                if (foodUnit != foodItem.unitId) updatedFoodItem["unit_id"] = foodUnit
-
-                // Ha történt változás, frissítjük az adatbázisban
-                if (updatedFoodItem.isNotEmpty()) {
-                    currentHouseholdId?.let { householdId -> updateItemInHousehold(householdId,"Shopping_List",foodItem.id, updatedFoodItem) }
-                    foodItem.name = foodName
-                    foodItem.comment = foodComment
-                    foodItem.quantity = foodQuantity.toInt()
-                    foodItem.unitId = unitsMap.filterValues { it == foodUnit }.keys.first()
-                    shoppingListAdapter.notifyDataSetChanged()
-                    updateEmptyView()
-                    Toast.makeText(this, "Food item updated", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, "No changes detected", Toast.LENGTH_SHORT).show()
-                }
-                dialog.dismiss()
-            } else {
-                Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        dialogView.findViewById<Button>(R.id.deleteButton).setOnClickListener {
-            currentHouseholdId?.let { householdId -> deleteItemFromHousehold(householdId,"Shopping_List", foodItem.id) }
-            shoppingList.removeAt(position)
-            shoppingListAdapter.notifyDataSetChanged()
-            updateEmptyView()
-            Toast.makeText(this, "Food item deleted", Toast.LENGTH_SHORT).show()
-            dialog.dismiss()
-        }
-
-        dialog.show()
-    }
-
-    private fun showEditStorageItemDialog(position: Int) {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_food, null)
-        val foodNameEditText = dialogView.findViewById<EditText>(R.id.foodNameEditText)
-        val foodCommentEditText = dialogView.findViewById<EditText>(R.id.foodCommentEditText)
-        val foodQuantityEditText = dialogView.findViewById<EditText>(R.id.foodQuantityEditText)
-        val foodUnitSpinner = dialogView.findViewById<Spinner>(R.id.foodUnitSpinner)
-        val closeDialog = dialogView.findViewById<ImageView>(R.id.closeDialog)
-
-        val dialog = AlertDialog.Builder(this)
-            .setView(dialogView)
-            .create()
-
-        val foodItem = storageList[position]
-
-        // Kitöltjük az adatokat a foodItem objektumból
-        foodNameEditText.setText(foodItem.name)
-        foodCommentEditText.setText(foodItem.comment)
-        foodQuantityEditText.setText(foodItem.quantity.toString())
-
-        val unitNames = unitsList.map { unitsMap[it] ?: it }
-        val unitAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, unitNames)
-        unitAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        foodUnitSpinner.adapter = unitAdapter
-
+        // Spinner kiválasztott elemének beállítása
         val unitName = unitsMap[foodItem.unitId]
         if (unitName != null) {
-            val unitPosition = unitsList.indexOf(unitName)
+            val unitPosition = unitNames.indexOf(unitName)
             if (unitPosition != -1) {
                 foodUnitSpinner.setSelection(unitPosition)
             }
@@ -427,19 +351,20 @@ class MainActivity : AppCompatActivity(){
                 if (foodName != foodItem.name) updatedFoodItem["name"] = foodName
                 if (foodComment != foodItem.comment) updatedFoodItem["comment"] = foodComment
                 if (foodQuantity.toInt() != foodItem.quantity) updatedFoodItem["quantity"] = foodQuantity.toInt()
-                if (foodUnit != foodItem.unitId) updatedFoodItem["unit_id"] = foodUnit
+                if (foodUnit != foodItem.unitId) updatedFoodItem["unit_id"] =
+                    unitsMap.filterValues { it == foodUnit }.keys.first()
 
                 if (updatedFoodItem.isNotEmpty()) {
                     currentHouseholdId?.let { householdId ->
-                        updateItemInHousehold(householdId,"Storage", foodItem.id, updatedFoodItem)
+                        updateItemInHousehold(householdId, collectionName, foodItem.id, updatedFoodItem)
                     }
                     foodItem.name = foodName
                     foodItem.comment = foodComment
                     foodItem.quantity = foodQuantity.toInt()
                     foodItem.unitId = unitsMap.filterValues { it == foodUnit }.keys.first()
-                    storageListAdapter.notifyDataSetChanged()
+                    adapter.notifyDataSetChanged()
                     updateEmptyView()
-                    Toast.makeText(this, "Tárolt termék frissítve", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Termék frissítve", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(this, "Nem történt változás", Toast.LENGTH_SHORT).show()
                 }
@@ -451,17 +376,18 @@ class MainActivity : AppCompatActivity(){
 
         dialogView.findViewById<Button>(R.id.deleteButton).setOnClickListener {
             currentHouseholdId?.let { householdId ->
-                deleteItemFromHousehold(householdId,"Storage", foodItem.id)
+                deleteItemFromHousehold(householdId, collectionName, foodItem.id)
             }
-            storageList.removeAt(position)
-            storageListAdapter.notifyDataSetChanged()
+            itemList.removeAt(position)
+            adapter.notifyDataSetChanged()
             updateEmptyView()
-            Toast.makeText(this, "Tárolt termék törölve", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Termék törölve", Toast.LENGTH_SHORT).show()
             dialog.dismiss()
         }
 
         dialog.show()
     }
+
 
     private fun updateItemInHousehold(householdId: String, collectionName: String, itemId: String, updatedData: Map<String, Any>) {
         db.collection("Households")
