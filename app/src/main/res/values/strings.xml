@@ -29,5 +29,10 @@
 
     <string name="quantity">Mennyiség</string>
     <string name="comment">Megjegyzés</string>
+    <string name="empty_name">Gipsz Jakab</string>
+    <string name="households">Háztartásai</string>
+    <string name="username">Felhasználó neve</string>
+    <string name="change_name">Név változtatása</string>
+    <string name="change_password">Jelszó változtatása</string>
 
 </resources>
