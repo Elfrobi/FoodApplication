@@ -1,24 +1,20 @@
 package com.example.foodapplication
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.appcompat.widget.Toolbar
-import androidx.drawerlayout.widget.DrawerLayout
 import com.google.firebase.auth.EmailAuthProvider
 
 class SettingsActivity : AppCompatActivity() {
-
-    private val db = FirebaseFirestore.getInstance()
     private val firebaseAuth = FirebaseAuth.getInstance()
-    private lateinit var drawerLayout: DrawerLayout
     private lateinit var toolbar: Toolbar
     private lateinit var nameTextView: TextView
 
@@ -27,38 +23,28 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
-        drawerLayout = findViewById(R.id.drawer_layout)
         toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        supportActionBar?.title = "Beállítások"
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+            setHomeAsUpIndicator(R.drawable.back_icon)
+            title = "Beállítások"
+        }
 
         nameTextView = findViewById(R.id.nameTextView)
         val changeNameButton = findViewById<Button>(R.id.changeNameButton)
         val changePasswordButton = findViewById<Button>(R.id.changePasswordButton)
 
-        // A felhasználó nevének automatikus kitöltése
         fillUserName()
 
-        // Név módosítás dialógus megnyitása
         changeNameButton.setOnClickListener {
             showChangeNameDialog()
         }
 
-        // Jelszó módosítás dialógus megnyitása
         changePasswordButton.setOnClickListener {
             showChangePasswordDialog()
         }
-
-        val actionBarDrawerToggle = ActionBarDrawerToggle(
-            this,
-            drawerLayout,
-            toolbar,
-            R.string.navigation_drawer_open,
-            R.string.navigation_drawer_close
-        )
-        drawerLayout.addDrawerListener(actionBarDrawerToggle)
-        actionBarDrawerToggle.syncState()
     }
 
     private fun showChangeNameDialog() {
@@ -128,13 +114,10 @@ class SettingsActivity : AppCompatActivity() {
             val uid = user.uid
             val userRef = FirebaseFirestore.getInstance().collection("Users").document(uid)
 
-            // Lekérjük a felhasználó adatokat a Firestore-ból
             userRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
-                    // A "name" mezőt frissítjük a Firestore-ból
                     val userName = document.getString("username")
                     userName?.let {
-                        // Ha van név, akkor beállítjuk a TextView-ba
                         nameTextView.text = it
                     }
                 } else {
@@ -165,8 +148,6 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-
-
     private fun updatePassword(oldPassword: String, newPassword: String) {
         val user = firebaseAuth.currentUser
         if (user != null) {
@@ -186,4 +167,15 @@ class SettingsActivity : AppCompatActivity() {
                 }
         }
     }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
 }

@@ -26,6 +26,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 class MainActivity : AppCompatActivity(){
     private val db = FirebaseFirestore.getInstance()
+    private val firebaseAuth = FirebaseAuth.getInstance()
     private val storageList = mutableListOf<FoodItem>()
     private val shoppingList = mutableListOf<FoodItem>()
     private lateinit var storageListAdapter: FoodItemAdapter
@@ -64,6 +65,7 @@ class MainActivity : AppCompatActivity(){
         setSupportActionBar(toolbar)
 
         setHeaderPadding()
+        setHeaderUserName()
         emptyTextView = findViewById(R.id.emptyTextView)
 
         shoppingListAdapter = FoodItemAdapter(this, shoppingList, unitsMap)
@@ -129,7 +131,10 @@ class MainActivity : AppCompatActivity(){
     override fun onResume() {
         super.onResume()
         loadUserHouseholdsToMenu()
-        loadFoodList(currentHouseholdId!!)
+        setHeaderUserName()
+        val menu = navigationView.menu
+        val menuItem = menu.findItem(R.id.nav_settings)
+        menuItem?.isChecked = false
     }
 
     private fun checkUserHouseholds() {
@@ -203,7 +208,6 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun loadFoodList(householdId: String) {
-        // Hivatkozás a Shopping_List kollekcióra
         db.collection("Households")
             .document(householdId)
             .collection("Shopping_List")
@@ -295,6 +299,30 @@ class MainActivity : AppCompatActivity(){
             headerLayout.paddingRight,
             headerLayout.paddingBottom
         )
+    }
+
+    private fun setHeaderUserName(){
+        val headerView = navigationView.getHeaderView(0)
+        val usernameTextView = headerView.findViewById<TextView>(R.id.usernameTextView)
+
+        val user = firebaseAuth.currentUser
+        if (user != null) {
+            val uid = user.uid
+            val userRef = FirebaseFirestore.getInstance().collection("Users").document(uid)
+
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val userName = document.getString("username")
+                    userName?.let {
+                        usernameTextView.text = it
+                    }
+                } else {
+                    Toast.makeText(this, "Felhasználói adat nem található!", Toast.LENGTH_SHORT).show()
+                }
+            }.addOnFailureListener { e ->
+                Toast.makeText(this, "Hiba történt a felhasználói adatok lekérésekor: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun showEditItemDialog(
@@ -485,20 +513,18 @@ class MainActivity : AppCompatActivity(){
                 menu.removeGroup(11)
 
                 val submenu = menu.addSubMenu(11, Menu.NONE, Menu.NONE, "Háztartások")
+                val householdIds = mutableListOf<String>()
+                var loadedCount = 0
 
                 for (document in documents) {
                     val householdId = document.getString("household_id") ?: continue
+                    householdIds.add(householdId)
 
                     db.collection("Households").document(householdId).get()
                         .addOnSuccessListener { household ->
                             val householdName = household.getString("name") ?: "Névtelen háztartás"
                             val menuItem = submenu.add(Menu.NONE, householdId.hashCode(), Menu.NONE, householdName)
-
                             menuItem.isCheckable = true
-
-                            if (householdId == currentHouseholdId) {
-                                menuItem.isChecked = true
-                            }
 
                             menuItem.setOnMenuItemClickListener {
                                 saveSelectedHousehold(householdId)
@@ -507,10 +533,32 @@ class MainActivity : AppCompatActivity(){
                                 drawerLayout.closeDrawer(navigationView)
                                 true
                             }
+
+                            loadedCount++
+
+                            if (loadedCount == householdIds.size) {
+                                val sharedPref = getSharedPreferences("app_prefs", MODE_PRIVATE)
+                                val savedId = sharedPref.getString("SELECTED_HOUSEHOLD", null)
+
+                                val selectedId = savedId ?: householdIds.firstOrNull()
+                                currentHouseholdId = selectedId
+
+                                for (i in 0 until submenu.size()) {
+                                    val item = submenu.getItem(i)
+                                    item.isChecked = item.itemId == selectedId.hashCode()
+                                }
+                                selectedId?.let { loadFoodList(it) }
+                            }
                         }
+                }
+                if (documents.isEmpty) {
+                    shoppingList.clear()
+                    shoppingListAdapter.notifyDataSetChanged()
+                    updateEmptyView()
                 }
             }
     }
+
 
     private fun updateEmptyView() {
         if (foodListView.adapter == shoppingListAdapter) {

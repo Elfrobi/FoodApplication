@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/header_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -9,15 +8,17 @@
     android:orientation="vertical">
 
     <ImageView
+        android:contentDescription="@string/household"
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:src="@drawable/food_logo" />
 
     <TextView
+        android:id="@+id/usernameTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/paprika"
-        android:text="Gipsz Jakab"
+        android:text="@string/empty_name"
         android:textSize="24sp" />
 
     <TextView
@@ -25,7 +26,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="30dp"
         android:fontFamily="@font/paprika"
-        android:text="Háztartásai"
+        android:text="@string/households"
         android:textSize="24sp" />
 
 
