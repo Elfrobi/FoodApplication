@@ -23,6 +23,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.Date
 
 class MainActivity : AppCompatActivity(){
     private val db = FirebaseFirestore.getInstance()
@@ -214,7 +215,6 @@ class MainActivity : AppCompatActivity(){
             .get()
             .addOnSuccessListener { querySnapshot ->
                 shoppingList.clear() // Korábbi lista törlése
-
                 // Dokumentumok átalakítása FoodItem objektumokká
                 for (document in querySnapshot) {
                     val id = document.id
@@ -222,8 +222,9 @@ class MainActivity : AppCompatActivity(){
                     val quantity = (document.getLong("quantity") ?: 0L).toInt()
                     val unitId = document.getString("unit_id") ?: "Unknown"
                     val comment = document.getString("comment") ?: "Unknown"
+                    val expiration = document.getDate("expirationDate") ?: Date()
 
-                    shoppingList.add(FoodItem(id, name, quantity, unitId, comment))
+                    shoppingList.add(FoodItem(id, name, quantity, unitId, comment, expiration))
                 }
                 shoppingListAdapter.notifyDataSetChanged()
                 updateEmptyView()
@@ -249,8 +250,9 @@ class MainActivity : AppCompatActivity(){
                         val quantity = (document.getLong("quantity") ?: 0L).toInt()
                         val unitId = document.getString("unit_id") ?: "Unknown"
                         val comment = document.getString("comment") ?: "Unknown"
+                        val expiration = document.getDate("expirationDate") ?: Date()
 
-                        storageList.add(FoodItem(id, name, quantity, unitId, comment))
+                        storageList.add(FoodItem(id, name, quantity, unitId, comment, expiration))
                     }
                     storageListAdapter.notifyDataSetChanged()
                     updateEmptyView()
@@ -464,7 +466,8 @@ class MainActivity : AppCompatActivity(){
                 "name" to foodItem.name,
                 "quantity" to foodItem.quantity,
                 "unit_id" to foodItem.unitId,
-                "comment" to foodItem.comment
+                "comment" to foodItem.comment,
+                "expiration" to foodItem.expiration,
             )
 
             storageRef.add(newItem)
